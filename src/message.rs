@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 
 use core::fmt::Debug;
@@ -189,6 +190,36 @@ where
     }
     fn clear(&mut self) {
         (**self).clear()
+    }
+}
+
+impl<M> Message for Arc<M>
+where
+    M: Message + Clone,
+{
+    fn encode_raw<B>(&self, buf: &mut B)
+    where
+        B: BufMut,
+    {
+        (**self).encode_raw(buf)
+    }
+    fn merge_field<B>(
+        &mut self,
+        tag: u32,
+        wire_type: WireType,
+        buf: &mut B,
+        ctx: DecodeContext,
+    ) -> Result<(), DecodeError>
+    where
+        B: Buf,
+    {
+        Arc::make_mut(self).merge_field(tag, wire_type, buf, ctx)
+    }
+    fn encoded_len(&self) -> usize {
+        (**self).encoded_len()
+    }
+    fn clear(&mut self) {
+        Arc::make_mut(self).clear()
     }
 }
 
